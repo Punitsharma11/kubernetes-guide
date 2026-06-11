@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes Complete Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --blue:#388bfd;--blue-dim:#1f3a5f;--cyan:#79c0ff;--green:#3fb950;--green-dim:#0d2b0d;
+  --orange:#d29922;--orange-dim:#3d2b00;--purple:#bc8cff;--pink:#f778ba;
+  --text:#e6edf3;--text-muted:#8b949e;--text-dim:#6e7681;--code-bg:#010409;--tag-bg:#21262d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6}
+.layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.sidebar-logo{padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.k8s-badge{display:flex;align-items:center;gap:10px}
+.k8s-icon{width:38px;height:38px;background:linear-gradient(135deg,#326ce5,#79c0ff);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0;box-shadow:0 0 12px #326ce544}
+.sbl-title{font-size:13px;font-weight:700;color:var(--text)}
+.sbl-ver{font-size:11px;color:var(--text-muted);margin-top:1px}
+.nav-group{padding:4px 10px;margin-bottom:2px}
+.nav-group-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);padding:6px 8px 4px;display:block}
+.nav-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;color:var(--text-muted);font-size:12.5px;text-decoration:none;transition:all .15s;white-space:nowrap}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-dim);color:var(--cyan)}
+.nav-num{width:19px;height:19px;border-radius:4px;background:var(--tag-bg);color:var(--text-dim);font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-item.active .nav-num{background:var(--blue-dim);color:var(--cyan)}
+
+/* MAIN */
+.main{flex:1;max-width:900px;padding:36px 48px 60px;overflow-x:hidden}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0d1f3c 0%,#161b22 55%,#0d2137 100%);border:1px solid #1f3a5f;border-radius:14px;padding:40px 44px 36px;margin-bottom:52px;position:relative;overflow:hidden}
+.hero::after{content:'K8S';position:absolute;right:-8px;bottom:-24px;font-size:140px;font-weight:900;color:#0a1929;font-family:'JetBrains Mono',monospace;line-height:1;pointer-events:none;user-select:none}
+.hero-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--blue);margin-bottom:10px}
+.hero h1{font-size:34px;font-weight:800;color:#fff;line-height:1.15;margin-bottom:12px}
+.hero h1 span{color:var(--cyan)}
+.hero-desc{color:var(--text-muted);font-size:14px;max-width:520px;margin-bottom:22px;line-height:1.7}
+.hero-tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{background:var(--tag-bg);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:11.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.tag.blue{border-color:#1f3a5f;color:var(--cyan);background:#0d1f3c}
+.tag.green{border-color:#1a3a1a;color:var(--green);background:#0a1a0a}
+.tag.purple{border-color:#3a1f5f;color:var(--purple);background:#160d2a}
+
+/* SECTIONS */
+.section{margin-bottom:56px;scroll-margin-top:20px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-num{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#1f3a5f,#388bfd22);border:1px solid #388bfd55;color:var(--cyan);font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-title{font-size:21px;font-weight:700;color:var(--text)}
+.section-sub{font-size:13px;color:var(--text-muted);margin-left:4px;font-weight:400}
+h3{font-size:15px;font-weight:600;color:var(--cyan);margin:22px 0 10px}
+h4{font-size:13px;font-weight:600;color:var(--orange);margin:16px 0 8px}
+p{color:var(--text-muted);margin-bottom:12px;line-height:1.75}
+ul,ol{margin:8px 0 14px;padding-left:22px}
+li{color:var(--text-muted);margin-bottom:5px;line-height:1.65}
+li::marker{color:var(--blue)}
+strong{color:var(--text);font-weight:600}
+code{background:var(--tag-bg);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan)}
+
+/* ARCHITECTURE DIAGRAM */
+.arch-diagram{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin:16px 0 24px;overflow-x:auto}
+.arch-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:20px;text-align:center}
+.arch-cluster{border:2px dashed #388bfd44;border-radius:12px;padding:20px;position:relative}
+.arch-cluster-label{position:absolute;top:-10px;left:16px;background:var(--surface);padding:0 8px;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+.arch-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.arch-node{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:140px;text-align:center;position:relative}
+.arch-node.master{border-color:#326ce544;background:#0d1f3c}
+.arch-node.worker{border-color:#3fb95044;background:#0a1a0a}
+.arch-node.etcd{border-color:#bc8cff44;background:#160d2a}
+.arch-node-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.arch-node.master .arch-node-title{color:var(--cyan)}
+.arch-node.worker .arch-node-title{color:var(--green)}
+.arch-node.etcd .arch-node-title{color:var(--purple)}
+.arch-chip{display:inline-block;background:var(--tag-bg);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin:2px;line-height:1.4}
+.arch-chip.blue{color:var(--cyan);border-color:#1f3a5f;background:#0d1832}
+.arch-chip.green{color:var(--green);border-color:#1a3a1a;background:#091509}
+.arch-chip.purple{color:var(--purple);border-color:#3a1f5f;background:#130926}
+.arch-chip.orange{color:var(--orange);border-color:#3d2b00;background:#1a1200}
+.arch-arrow{text-align:center;color:var(--text-dim);font-size:18px;margin:4px 0;line-height:1}
+
+/* COMPONENT CARDS */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.comp-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;transition:border-color .2s}
+.comp-card:hover{border-color:#388bfd55}
+.comp-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.comp-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.comp-icon.blue{background:#0d1f3c;border:1px solid #1f3a5f}
+.comp-icon.green{background:#0a1a0a;border:1px solid #1a3a1a}
+.comp-icon.purple{background:#160d2a;border:1px solid #3a1f5f}
+.comp-icon.orange{background:#1a1200;border:1px solid #3d2b00}
+.comp-icon.pink{background:#2a0d1a;border:1px solid #5f1f3a}
+.comp-name{font-size:13px;font-weight:700;color:var(--text)}
+.comp-type{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+.comp-desc{font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-bottom:8px}
+.comp-uses{display:flex;flex-wrap:wrap;gap:5px}
+.comp-use-tag{font-size:10.5px;background:var(--tag-bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+
+/* STEP BLOCKS */
+.step{border:1px solid var(--border);border-radius:10px;margin-bottom:24px;overflow:hidden}
+.step-header{display:flex;align-items:center;gap:12px;padding:11px 16px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.step-badge{background:linear-gradient(135deg,#326ce5,#79c0ff);color:#fff;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.step-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.step-body{padding:16px}
+.step-body>p:last-child{margin-bottom:0}
+
+/* CODE BLOCKS */
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;margin:10px 0;overflow:hidden}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:#0d1117;border-bottom:1px solid #21262d}
+.code-label{font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.code-label::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.copy-btn{display:flex;align-items:center;gap:5px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:500;padding:3px 10px;border-radius:5px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.copy-btn:hover{background:var(--blue-dim);border-color:var(--blue);color:var(--cyan)}
+.copy-btn.copied{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.copy-btn svg{width:11px;height:11px}
+.code-body{padding:14px 16px;overflow-x:auto}
+.code-body pre{font-size:12.5px;line-height:1.75;color:#e6edf3;white-space:pre;margin:0;font-family:'JetBrains Mono',monospace}
+
+/* NOTE / WARNING */
+.note{display:flex;gap:12px;background:var(--orange-dim);border:1px solid #5c3d00;border-left:3px solid var(--orange);border-radius:6px;padding:11px 15px;margin:10px 0}
+.note.info{background:#0d1f3c;border-color:#1f3a5f;border-left-color:var(--blue)}
+.note.success{background:var(--green-dim);border-color:#1a3a1a;border-left-color:var(--green)}
+.note-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.note p{color:#c9a84c;margin:0;font-size:12.5px;line-height:1.6}
+.note.info p{color:#79c0ff}
+.note.success p{color:#56d364}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;margin:12px 0;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface2);color:var(--text);font-weight:600;padding:10px 14px;text-align:left;border-bottom:2px solid var(--blue)}
+tbody tr:nth-child(even){background:#0d1117}
+tbody tr:hover{background:#1a2233}
+tbody td{padding:9px 14px;color:var(--text-muted);border-bottom:1px solid var(--border)}
+tbody td:first-child{color:var(--text);font-weight:500}
+tbody tr:last-child td{border-bottom:none}
+
+/* QUICK REF */
+.qr-cmd{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.qr-desc{color:var(--text-muted)}
+.mini-copy{background:none;border:1px solid var(--border);color:var(--text-dim);font-size:10px;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.mini-copy:hover{border-color:var(--blue);color:var(--cyan);background:var(--blue-dim)}
+.mini-copy.copied{border-color:var(--green);color:var(--green)}
+
+/* FLOW STEPS */
+.flow{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.flow-item{display:flex;gap:16px;align-items:flex-start}
+.flow-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.flow-dot{width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--bg);box-shadow:0 0 0 2px var(--blue);flex-shrink:0;margin-top:5px}
+.flow-connector{width:2px;background:var(--border);flex:1;min-height:20px;margin:2px 0}
+.flow-content{padding-bottom:18px;flex:1}
+.flow-content strong{display:block;font-size:13px;color:var(--text);margin-bottom:3px}
+.flow-content span{font-size:12.5px;color:var(--text-muted)}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:22px 0;margin-top:20px;color:var(--text-dim);font-size:12px}
+.footer a{color:var(--blue);text-decoration:none}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* SVG copy icon inline */
+.ico{width:11px;height:11px;display:inline-block;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="k8s-badge">
+      <div class="k8s-icon">K</div>
+      <div><div class="sbl-title">Kubernetes Guide</div><div class="sbl-ver">v1.21.3-00 · Ubuntu 16.04</div></div>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Overview</span>
+    <a class="nav-item active" href="#intro"><span class="nav-num">1</span> Introduction</a>
+    <a class="nav-item" href="#architecture"><span class="nav-num">2</span> Architecture</a>
+    <a class="nav-item" href="#components"><span class="nav-num">3</span> Components</a>
+    <a class="nav-item" href="#prereq"><span class="nav-num">4</span> Prerequisites</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-group-label">Installation</span>
+    <a class="nav-item" href="#preinstall"><span class="nav-num">5</span> Pre-Installation</a>
+    <a class="nav-item" href="#master"><span class="nav-num">6</span> Master Node</a>
+    <a class="nav-item" href="#worker"><span class="nav-num">7</span> Worker Node</a>
+    <a class="nav-item" href="#verify"><span class="nav-num">8</span> Verify Cluster</a>
+    <a class="nav-item" href="#cni"><span class="nav-num">9</span> CNI Plugin</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-group-label">Management</span>
+    <a class="nav-item" href="#dashboard"><span class="nav-num">10</span> Dashboard</a>
+    <a class="nav-item" href="#workloads"><span class="nav-num">11</span> Deploy Apps</a>
+    <a class="nav-item" href="#networking"><span class="nav-num">12</span> Networking</a>
+    <a class="nav-item" href="#troubleshoot"><span class="nav-num">13</span> Troubleshoot</a>
+    <a class="nav-item" href="#quickref"><span class="nav-num">14</span> Quick Reference</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">DevOps · Container Orchestration · Complete Guide</div>
+  <h1>Kubernetes <span>Complete</span> Guide</h1>
+  <p class="hero-desc">Architecture, Components, Installation, Deployment — everything you need to set up and manage a production-ready Kubernetes cluster on Ubuntu 16.04.</p>
+  <div class="hero-tags">
+    <span class="tag blue">v1.21.3-00</span>
+    <span class="tag">Ubuntu 16.04</span>
+    <span class="tag">Docker CE</span>
+    <span class="tag">kubeadm</span>
+    <span class="tag green">Weave CNI</span>
+    <span class="tag purple">kubectl</span>
+    <span class="tag">Dashboard</span>
+  </div>
+</div>
+
+<!-- ══ 1. INTRODUCTION ══════════════════════════════════════════ -->
+<div class="section" id="intro">
+  <div class="section-header"><div class="section-num">1</div><div class="section-title">Introduction</div></div>
+  <p>Kubernetes (K8s) is an open-source container orchestration platform originally developed by Google and now maintained by the CNCF (Cloud Native Computing Foundation). It automates deployment, scaling, and lifecycle management of containerized applications.</p>
+  <p><strong>Why Kubernetes?</strong> Docker gives you containers. Kubernetes gives you a system to run those containers reliably across many machines — with automatic restarts, load balancing, rolling updates, and self-healing built in.</p>
+
+  <div class="flow">
+    <div class="flow-item">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content"><strong>You write a YAML manifest</strong><span>Describes the desired state — what containers to run, how many replicas, what ports to expose</span></div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content"><strong>kubectl apply -f your-app.yaml</strong><span>You submit it to the API Server on the Master node</span></div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content"><strong>Scheduler places pods on Worker nodes</strong><span>Based on resource availability and constraints</span></div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-line"><div class="flow-dot"></div></div>
+      <div class="flow-content"><strong>Kubernetes keeps it running forever</strong><span>Restarts crashed containers, reschedules if a node fails, scales up/down on demand</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 2. ARCHITECTURE ══════════════════════════════════════════ -->
+<div class="section" id="architecture">
+  <div class="section-header"><div class="section-num">2</div><div class="section-title">Kubernetes Architecture</div></div>
+  <p>A Kubernetes cluster has two types of machines: the <strong>Master Node</strong> (Control Plane) that makes decisions, and <strong>Worker Nodes</strong> that run your applications.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-title">Kubernetes Cluster Architecture</div>
+
+    <!-- CONTROL PLANE -->
+    <div class="arch-cluster" style="margin-bottom:14px">
+      <span class="arch-cluster-label">🖥️ MASTER NODE — Control Plane</span>
+      <div class="arch-row">
+        <div class="arch-node master">
+          <div class="arch-node-title">API Server</div>
+          <span class="arch-chip blue">kube-apiserver</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:5px;display:block">Frontend of K8s — all requests go here</span>
+        </div>
+        <div class="arch-node master">
+          <div class="arch-node-title">Scheduler</div>
+          <span class="arch-chip blue">kube-scheduler</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:5px;display:block">Assigns pods to nodes</span>
+        </div>
+        <div class="arch-node master">
+          <div class="arch-node-title">Controller Manager</div>
+          <span class="arch-chip blue">kube-controller-manager</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:5px;display:block">Watches & maintains desired state</span>
+        </div>
+        <div class="arch-node etcd">
+          <div class="arch-node-title">etcd</div>
+          <span class="arch-chip purple">key-value store</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:5px;display:block">Stores all cluster data</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">⇅ API calls over HTTPS</div>
+
+    <!-- WORKER NODES -->
+    <div class="arch-cluster">
+      <span class="arch-cluster-label">⚙️ WORKER NODES</span>
+      <div class="arch-row">
+        <div class="arch-node worker" style="min-width:180px">
+          <div class="arch-node-title">Worker Node 1</div>
+          <span class="arch-chip green">kubelet</span>
+          <span class="arch-chip green">kube-proxy</span>
+          <span class="arch-chip orange">Container Runtime</span>
+          <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod A</div>
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod B</div>
+          </div>
+        </div>
+        <div class="arch-node worker" style="min-width:180px">
+          <div class="arch-node-title">Worker Node 2</div>
+          <span class="arch-chip green">kubelet</span>
+          <span class="arch-chip green">kube-proxy</span>
+          <span class="arch-chip orange">Container Runtime</span>
+          <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod C</div>
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod D</div>
+          </div>
+        </div>
+        <div class="arch-node worker" style="min-width:180px">
+          <div class="arch-node-title">Worker Node 3</div>
+          <span class="arch-chip green">kubelet</span>
+          <span class="arch-chip green">kube-proxy</span>
+          <span class="arch-chip orange">Container Runtime</span>
+          <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod E</div>
+            <div style="background:#0a2a0a;border:1px solid #1a4a1a;border-radius:5px;padding:4px 8px;font-size:10px;color:var(--green)">Pod F</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3. COMPONENTS ══════════════════════════════════════════ -->
+<div class="section" id="components">
+  <div class="section-header"><div class="section-num">3</div><div class="section-title">Kubernetes Components <span class="section-sub">— what each piece does</span></div></div>
+
+  <h3>🖥️ Control Plane Components (Master Node)</h3>
+  <div class="comp-grid">
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon blue">🌐</div>
+        <div><div class="comp-name">kube-apiserver</div><div class="comp-type" style="color:var(--cyan)">API Server</div></div>
+      </div>
+      <div class="comp-desc">The <strong>front door of Kubernetes</strong>. Every kubectl command, every dashboard click, every internal component — all talk through the API Server. It validates requests and updates the cluster state in etcd.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">REST API</span>
+        <span class="comp-use-tag">Authentication</span>
+        <span class="comp-use-tag">Authorization</span>
+        <span class="comp-use-tag">Admission Control</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon purple">🗄️</div>
+        <div><div class="comp-name">etcd</div><div class="comp-type" style="color:var(--purple)">Distributed Key-Value Store</div></div>
+      </div>
+      <div class="comp-desc">The <strong>brain/memory of the cluster</strong>. All cluster state, configuration, secrets, and service discovery data is stored here. It's a distributed key-value store — if you lose etcd, you lose everything.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Cluster State</span>
+        <span class="comp-use-tag">Configs</span>
+        <span class="comp-use-tag">Secrets</span>
+        <span class="comp-use-tag">Leader Election</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon blue">📅</div>
+        <div><div class="comp-name">kube-scheduler</div><div class="comp-type" style="color:var(--cyan)">Scheduler</div></div>
+      </div>
+      <div class="comp-desc">The <strong>pod placement engine</strong>. When a new pod needs to run, the Scheduler picks the best Worker node based on CPU/memory availability, affinity rules, taints/tolerations, and other constraints.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Node Selection</span>
+        <span class="comp-use-tag">Resource Fitting</span>
+        <span class="comp-use-tag">Affinity Rules</span>
+        <span class="comp-use-tag">Taints/Tolerations</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon orange">🔁</div>
+        <div><div class="comp-name">kube-controller-manager</div><div class="comp-type" style="color:var(--orange)">Controller Manager</div></div>
+      </div>
+      <div class="comp-desc">Runs <strong>background control loops</strong> that watch cluster state and make changes to reach the desired state. Includes the Node Controller, Replication Controller, Endpoints Controller, and many others.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Node Controller</span>
+        <span class="comp-use-tag">ReplicaSet</span>
+        <span class="comp-use-tag">Endpoints</span>
+        <span class="comp-use-tag">ServiceAccount</span>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>⚙️ Worker Node Components</h3>
+  <div class="comp-grid">
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon green">🤖</div>
+        <div><div class="comp-name">kubelet</div><div class="comp-type" style="color:var(--green)">Node Agent</div></div>
+      </div>
+      <div class="comp-desc">The <strong>agent running on every worker node</strong>. It receives pod specs from the API Server and ensures the containers described in those specs are running and healthy. Reports node and pod status back to master.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Pod Lifecycle</span>
+        <span class="comp-use-tag">Health Checks</span>
+        <span class="comp-use-tag">Resource Reporting</span>
+        <span class="comp-use-tag">Volume Mounting</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon green">🔀</div>
+        <div><div class="comp-name">kube-proxy</div><div class="comp-type" style="color:var(--green)">Network Proxy</div></div>
+      </div>
+      <div class="comp-desc">Maintains <strong>network rules on every node</strong>. Handles routing of traffic to the right pod when you access a Kubernetes Service. Uses iptables or IPVS to implement virtual IPs for services.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Service Routing</span>
+        <span class="comp-use-tag">iptables</span>
+        <span class="comp-use-tag">Load Balancing</span>
+        <span class="comp-use-tag">Network Rules</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon orange">🐳</div>
+        <div><div class="comp-name">Container Runtime</div><div class="comp-type" style="color:var(--orange)">Docker / containerd / CRI-O</div></div>
+      </div>
+      <div class="comp-desc">The <strong>software that actually runs containers</strong>. Kubernetes itself doesn't run containers — it tells the container runtime to do it. Docker CE is used in this guide, but containerd and CRI-O are also supported.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Pull Images</span>
+        <span class="comp-use-tag">Start/Stop Containers</span>
+        <span class="comp-use-tag">CRI Interface</span>
+        <span class="comp-use-tag">Namespaces</span>
+      </div>
+    </div>
+
+    <div class="comp-card">
+      <div class="comp-card-header">
+        <div class="comp-icon pink">🌩️</div>
+        <div><div class="comp-name">CNI Plugin (Weave Net)</div><div class="comp-type" style="color:var(--pink)">Network Plugin</div></div>
+      </div>
+      <div class="comp-desc">Provides <strong>pod-to-pod networking across nodes</strong>. Without a CNI plugin, pods on different nodes can't communicate. Weave Net creates an overlay network that gives every pod a unique IP and enables cross-node communication.</div>
+      <div class="comp-uses">
+        <span class="comp-use-tag">Pod Networking</span>
+        <span class="comp-use-tag">Overlay Network</span>
+        <span class="comp-use-tag">DNS Resolution</span>
+        <span class="comp-use-tag">Network Policies</span>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>📦 Kubernetes Objects (Workload Resources)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Object</th><th>What it does</th><th>When to use</th></tr></thead>
+      <tbody>
+        <tr><td>Pod</td><td>Smallest deployable unit. One or more containers that share network/storage</td><td>Rarely directly — use Deployments instead</td></tr>
+        <tr><td>Deployment</td><td>Manages a set of identical pods. Handles rolling updates and rollbacks</td><td>Stateless apps (web servers, APIs)</td></tr>
+        <tr><td>ReplicaSet</td><td>Ensures a specified number of pod replicas are running at all times</td><td>Used internally by Deployments</td></tr>
+        <tr><td>Service</td><td>Stable network endpoint for pods. LoadBalancer, NodePort, or ClusterIP</td><td>Any time you need to expose a pod</td></tr>
+        <tr><td>ConfigMap</td><td>Store non-sensitive config data (env vars, config files)</td><td>App configuration separate from code</td></tr>
+        <tr><td>Secret</td><td>Store sensitive data (passwords, tokens, keys) — base64 encoded</td><td>DB passwords, API keys, TLS certs</td></tr>
+        <tr><td>Namespace</td><td>Virtual clusters within a cluster. Isolates resources</td><td>Multi-team or multi-environment setups</td></tr>
+        <tr><td>PersistentVolume</td><td>Storage resource in the cluster (NFS, cloud disk, etc.)</td><td>Databases and stateful apps</td></tr>
+        <tr><td>Ingress</td><td>Manages external HTTP/HTTPS access to services</td><td>Routing web traffic to multiple services</td></tr>
+        <tr><td>DaemonSet</td><td>Ensures a pod runs on every (or selected) node</td><td>Log collectors, monitoring agents</td></tr>
+        <tr><td>StatefulSet</td><td>Like Deployment but with stable identity and storage per pod</td><td>Databases (MySQL, MongoDB, Cassandra)</td></tr>
+        <tr><td>Job / CronJob</td><td>Runs pods to completion. CronJob runs on a schedule</td><td>Batch processing, backups, migrations</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 4. PREREQUISITES ══════════════════════════════════════ -->
+<div class="section" id="prereq">
+  <div class="section-header"><div class="section-num">4</div><div class="section-title">Prerequisites</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Requirement</th></tr></thead>
+      <tbody>
+        <tr><td>OS</td><td>Ubuntu 16.04 (or compatible Linux)</td></tr>
+        <tr><td>Nodes</td><td>2+ Linux servers — 1 Master + 1 or more Workers</td></tr>
+        <tr><td>Access</td><td>sudo / root privileges on each node</td></tr>
+        <tr><td>RAM</td><td>Minimum 2 GB per node (4 GB recommended for master)</td></tr>
+        <tr><td>CPU</td><td>Minimum 2 CPUs on master node</td></tr>
+        <tr><td>Disk</td><td>Minimum 20 GB free disk space</td></tr>
+        <tr><td>Network</td><td>Full network connectivity between all nodes</td></tr>
+        <tr><td>Ports</td><td>6443 (API), 2379-2380 (etcd), 10250-10252 (kubelet) open</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 5. PRE-INSTALLATION ══════════════════════════════════ -->
+<div class="section" id="preinstall">
+  <div class="section-header"><div class="section-num">5</div><div class="section-title">Pre-Installation Steps</div></div>
+  <div class="note info"><span class="note-icon">ℹ️</span><p>Run all commands in this section on <strong>BOTH Master and all Worker nodes</strong>.</p></div>
+
+  <h3>5.1 — Update System Packages</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — all nodes</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo apt-get update</pre></div></div>
+
+  <h3>5.2 — Disable Swap</h3>
+  <p>Kubernetes requires swap to be disabled — kubelet will refuse to start if swap is active.</p>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — all nodes</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo swapoff -a</pre></div></div>
+  <p>Make permanent by commenting out the swap entry in /etc/fstab:</p>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — all nodes</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo nano /etc/fstab
+# Comment out any line with 'swap', e.g.:
+# /swapfile   none   swap   sw   0   0</pre></div></div>
+
+  <h3>5.3 — Set Unique Hostname per Node</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — all nodes (different name each)</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo nano /etc/hostname
+# Master: k8s-master
+# Workers: k8s-worker-01, k8s-worker-02 ...</pre></div></div>
+
+  <h3>5.4 — Note Private IP of Each Node</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — all nodes</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>ip addr</pre></div></div>
+</div>
+
+<!-- ══ 6. MASTER NODE ════════════════════════════════════════ -->
+<div class="section" id="master">
+  <div class="section-header"><div class="section-num">6</div><div class="section-title">Master Node Setup</div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 1</span><span class="step-title">Install Docker CE on Master</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master only</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo apt-get update
+
+sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) \
+    stable"
+
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 2</span><span class="step-title">Install kubeadm, kubectl, kubelet on Master</span></div>
+  <div class="step-body">
+  <div class="note"><span class="note-icon">📌</span><p><strong>Use version 1.21.3-00.</strong> Version 1.24.1-00 has known installation issues — avoid it.</p></div>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master only</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>apt-get update && apt-get install -y apt-transport-https curl
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+apt-get update
+
+sudo apt-get install -y \
+    kubectl=1.21.3-00 \
+    kubeadm=1.21.3-00 \
+    kubelet=1.21.3-00
+
+# Lock versions to prevent accidental upgrades
+apt-mark hold kubelet kubeadm kubectl</pre></div></div>
+
+  <h4>What are these packages?</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Package</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>kubeadm</code></td><td>Bootstrap tool — initializes the cluster master and joins workers</td></tr>
+      <tr><td><code>kubectl</code></td><td>CLI tool to interact with the cluster (apply, get, delete, logs...)</td></tr>
+      <tr><td><code>kubelet</code></td><td>Agent that runs on every node — manages pods and containers</td></tr>
+    </tbody>
+  </table></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 3</span><span class="step-title">Initialize the Master Node (kubeadm init)</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master only</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo kubeadm init</pre></div></div>
+  <div class="note"><span class="note-icon">📌</span><p><strong>IMPORTANT:</strong> Copy and save the <code>kubeadm join ...</code> command printed at the end — you need it to add Worker nodes.</p></div>
+
+  <h4>Troubleshooting — cgroupdriver Error</h4>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — cgroupdriver fix</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo nano /etc/docker/daemon.json
+
+# Paste this content, then Ctrl+X > Y > Enter:
+{
+  "exec-opts": ["native.cgroupdriver=systemd"]
+}
+
+sudo systemctl restart docker
+sudo kubeadm reset
+sudo kubeadm init</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 4</span><span class="step-title">Configure kubectl Access</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master only</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config</pre></div></div>
+  </div></div>
+</div>
+
+<!-- ══ 7. WORKER NODE ════════════════════════════════════════ -->
+<div class="section" id="worker">
+  <div class="section-header"><div class="section-num">7</div><div class="section-title">Worker Node Setup</div></div>
+  <div class="note info"><span class="note-icon">ℹ️</span><p>Repeat all steps in this section on <strong>every Worker node</strong>.</p></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 1</span><span class="step-title">Install Docker CE on Worker</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — each worker</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo apt-get update
+
+sudo apt-get install -y \
+    apt-transport-https ca-certificates curl \
+    gnupg-agent software-properties-common
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable"
+
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 2</span><span class="step-title">Install Kubernetes Packages on Worker</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — each worker</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>apt-get update && apt-get install -y apt-transport-https curl
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+apt-get update
+
+sudo apt-get install -y \
+    kubectl=1.21.3-00 \
+    kubeadm=1.21.3-00 \
+    kubelet=1.21.3-00
+
+apt-mark hold kubelet kubeadm kubectl</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 3</span><span class="step-title">Join Worker to the Cluster</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — each worker (use your actual values)</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo kubeadm join &lt;MASTER_IP&gt;:6443 \
+    --token &lt;TOKEN&gt; \
+    --discovery-token-ca-cert-hash sha256:&lt;HASH&gt;</pre></div></div>
+  <div class="note"><span class="note-icon">📌</span><p>Replace <code>&lt;MASTER_IP&gt;</code>, <code>&lt;TOKEN&gt;</code>, <code>&lt;HASH&gt;</code> with actual values from master's <code>kubeadm init</code> output. To regenerate: run <code>kubeadm token create --print-join-command</code> on master.</p></div>
+  </div></div>
+</div>
+
+<!-- ══ 8. VERIFY ════════════════════════════════════════════ -->
+<div class="section" id="verify">
+  <div class="section-header"><div class="section-num">8</div><div class="section-title">Verify the Cluster</div></div>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># List all nodes
+kubectl get nodes -o wide
+
+# Watch continuously (Ctrl+C to stop)
+kubectl get nodes -o wide -w
+
+# Check system pods are running
+kubectl get pods -n kube-system</pre></div></div>
+  <div class="note success"><span class="note-icon">✅</span><p>All nodes should show <strong>STATUS: Ready</strong> after CNI is installed (Section 9).</p></div>
+</div>
+
+<!-- ══ 9. CNI ════════════════════════════════════════════════ -->
+<div class="section" id="cni">
+  <div class="section-header"><div class="section-num">9</div><div class="section-title">Install CNI Plugin — Weave Net</div></div>
+  <p>Without a CNI plugin, pods on different nodes <strong>cannot communicate</strong> and nodes stay in <code>NotReady</code> state. Weave Net creates an overlay network that gives every pod a unique IP across all nodes.</p>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master only</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml</pre></div></div>
+  <div class="note"><span class="note-icon">📌</span><p>Wait ~60 seconds, then run <code>kubectl get nodes</code> — all nodes should show <strong>STATUS: Ready</strong>.</p></div>
+
+  <h3>Multi-Network Configuration (Optional)</h3>
+  <p>If a worker has multiple network interfaces and needs a specific IP for cluster traffic:</p>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — worker node</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>sudo nano /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+# Add inside [Service] section:
+Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf \
+  --kubeconfig=/etc/kubernetes/kubelet.conf --node-ip=&lt;WORKER_PRIVATE_IP&gt;"
+
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet</pre></div></div>
+</div>
+
+<!-- ══ 10. DASHBOARD ════════════════════════════════════════ -->
+<div class="section" id="dashboard">
+  <div class="section-header"><div class="section-num">10</div><div class="section-title">Kubernetes Dashboard</div></div>
+  <p>A web UI to visually manage your cluster — view pod logs, deploy apps, scale workloads, and monitor resources.</p>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 1</span><span class="step-title">Deploy the Dashboard</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 2</span><span class="step-title">Create Admin Service Account</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>kubectl create serviceaccount dashboard-admin-sa
+
+kubectl create clusterrolebinding dashboard-admin-sa \
+    --clusterrole=cluster-admin \
+    --serviceaccount=default:dashboard-admin-sa</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 3</span><span class="step-title">Get Login Token</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>kubectl get secret \
+  $(kubectl get serviceaccount dashboard-admin-sa -o jsonpath="{.secrets[0].name}") \
+  -o jsonpath="{.data.token}" | base64 --decode</pre></div></div>
+  </div></div>
+
+  <div class="step"><div class="step-header"><span class="step-badge">Step 4</span><span class="step-title">Access Dashboard in Browser</span></div>
+  <div class="step-body">
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — master</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>kubectl proxy</pre></div></div>
+  <p>Open this URL:</p>
+  <div class="code-block"><div class="code-header"><span class="code-label">browser URL</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/</pre></div></div>
+  </div></div>
+</div>
+
+<!-- ══ 11. DEPLOY APPS ══════════════════════════════════════ -->
+<div class="section" id="workloads">
+  <div class="section-header"><div class="section-num">11</div><div class="section-title">Deploy Applications</div></div>
+  <p>Once the cluster is running, here's how to deploy and manage your applications.</p>
+
+  <h3>Deploy an Nginx Web Server (Example)</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — create deployment</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Create a deployment with 3 replicas
+kubectl create deployment nginx --image=nginx --replicas=3
+
+# Expose it as a NodePort service
+kubectl expose deployment nginx --port=80 --type=NodePort
+
+# Check status
+kubectl get pods
+kubectl get service nginx</pre></div></div>
+
+  <h3>Deploy via YAML Manifest (Recommended)</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">yaml — save as app.yaml</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  labels:
+    app: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080</pre></div></div>
+
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — apply the manifest</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Deploy
+kubectl apply -f app.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods -o wide
+
+# Scale up to 5 replicas
+kubectl scale deployment my-app --replicas=5
+
+# Rolling update to new image version
+kubectl set image deployment/my-app my-app=nginx:1.21
+
+# Rollback if something goes wrong
+kubectl rollout undo deployment/my-app
+
+# Delete deployment
+kubectl delete -f app.yaml</pre></div></div>
+
+  <h3>Namespace Management</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — namespaces</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Create a namespace
+kubectl create namespace production
+
+# Deploy into a specific namespace
+kubectl apply -f app.yaml -n production
+
+# List pods in a namespace
+kubectl get pods -n production
+
+# List all pods in all namespaces
+kubectl get pods --all-namespaces</pre></div></div>
+</div>
+
+<!-- ══ 12. NETWORKING ═══════════════════════════════════════ -->
+<div class="section" id="networking">
+  <div class="section-header"><div class="section-num">12</div><div class="section-title">Networking — Services &amp; Ingress</div></div>
+
+  <h3>Service Types Explained</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Type</th><th>Description</th><th>Use Case</th></tr></thead>
+    <tbody>
+      <tr><td><code>ClusterIP</code></td><td>Internal cluster IP only — not reachable outside</td><td>Internal microservice-to-microservice traffic</td></tr>
+      <tr><td><code>NodePort</code></td><td>Exposes on a port on every node (30000–32767)</td><td>Dev/testing — direct node access</td></tr>
+      <tr><td><code>LoadBalancer</code></td><td>Provisions cloud load balancer (AWS, GCP, Azure)</td><td>Production on cloud providers</td></tr>
+      <tr><td><code>ExternalName</code></td><td>Maps service to external DNS name</td><td>Routing to external services</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Useful Networking Commands</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — networking</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># List all services
+kubectl get services --all-namespaces
+
+# Describe a service (see endpoints, ports)
+kubectl describe service &lt;service-name&gt;
+
+# Get pod IP addresses
+kubectl get pods -o wide
+
+# Port-forward a pod locally for testing
+kubectl port-forward pod/&lt;pod-name&gt; 8080:80
+
+# View logs of a pod
+kubectl logs &lt;pod-name&gt;
+
+# Follow logs in real-time
+kubectl logs -f &lt;pod-name&gt;
+
+# Exec into a running pod
+kubectl exec -it &lt;pod-name&gt; -- /bin/bash</pre></div></div>
+</div>
+
+<!-- ══ 13. TROUBLESHOOT ══════════════════════════════════════ -->
+<div class="section" id="troubleshoot">
+  <div class="section-header"><div class="section-num">13</div><div class="section-title">Troubleshooting</div></div>
+
+  <h3>Check Component Health</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — diagnostics</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Check cluster component status
+kubectl get componentstatuses
+
+# Check node status and conditions
+kubectl describe node &lt;node-name&gt;
+
+# Check all system pods
+kubectl get pods -n kube-system
+
+# Check kubelet service status
+sudo systemctl status kubelet
+
+# View kubelet logs
+sudo journalctl -u kubelet -f
+
+# View API server logs
+kubectl logs -n kube-system kube-apiserver-&lt;master-hostname&gt;</pre></div></div>
+
+  <h3>Pod Troubleshooting</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — pod issues</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Pod stuck in Pending / CrashLoopBackOff
+kubectl describe pod &lt;pod-name&gt;
+kubectl logs &lt;pod-name&gt;
+kubectl logs &lt;pod-name&gt; --previous   # logs from crashed container
+
+# Get events for troubleshooting
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+# Force delete a stuck pod
+kubectl delete pod &lt;pod-name&gt; --force --grace-period=0
+
+# Check resource usage on nodes
+kubectl top nodes
+kubectl top pods</pre></div></div>
+
+  <h3>Common Issues &amp; Fixes</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Error</th><th>Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Node NotReady</td><td>CNI plugin not installed</td><td>Apply Weave Net (Section 9)</td></tr>
+      <tr><td>cgroupdriver mismatch</td><td>Docker and kubelet using different cgroups</td><td>Set systemd in daemon.json (Section 6, Step 3)</td></tr>
+      <tr><td>CrashLoopBackOff</td><td>Container keeps crashing</td><td>Run <code>kubectl logs &lt;pod&gt; --previous</code> to see crash reason</td></tr>
+      <tr><td>ImagePullBackOff</td><td>Container image not found / no access</td><td>Check image name, tag, and registry credentials</td></tr>
+      <tr><td>Pending pods</td><td>No nodes with enough resources</td><td>Check <code>kubectl describe pod</code> for resource constraints</td></tr>
+      <tr><td>Connection refused on join</td><td>Firewall blocking port 6443</td><td>Open port 6443 on master: <code>ufw allow 6443</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Reset and Reinstall (Nuclear Option)</h3>
+  <div class="code-block"><div class="code-header"><span class="code-label">bash — full reset</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div><div class="code-body"><pre># Reset the node (run on any node you want to reset)
+sudo kubeadm reset
+
+# Clean up CNI config
+sudo rm -rf /etc/cni/net.d
+sudo rm -rf $HOME/.kube
+
+# Flush iptables
+sudo iptables -F && sudo iptables -t nat -F
+sudo iptables -t mangle -F && sudo iptables -X
+
+# Re-initialize master after reset
+sudo kubeadm init</pre></div></div>
+</div>
+
+<!-- ══ 14. QUICK REFERENCE ══════════════════════════════════ -->
+<div class="section" id="quickref">
+  <div class="section-header"><div class="section-num">14</div><div class="section-title">Quick Reference Commands</div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody id="qr-body"></tbody>
+  </table></div>
+</div>
+
+<div class="footer">Official docs: <a href="https://kubernetes.io/docs/" target="_blank">kubernetes.io/docs</a> &nbsp;·&nbsp; <a href="https://kubernetes.io/docs/reference/kubectl/cheatsheet/" target="_blank">kubectl cheat sheet</a></div>
+</main>
+</div>
+
+<script>
+const qr=[
+  ["kubectl get nodes -o wide","List all nodes with extended details"],
+  ["kubectl get pods --all-namespaces","List all pods across every namespace"],
+  ["kubectl get pods -n <namespace>","List pods in a specific namespace"],
+  ["kubectl describe pod <name>","Detailed info about a pod (events, errors)"],
+  ["kubectl logs <pod-name>","View logs of a specific pod"],
+  ["kubectl logs -f <pod-name>","Follow pod logs in real-time"],
+  ["kubectl exec -it <pod> -- /bin/bash","Shell into a running pod"],
+  ["kubectl apply -f <file.yaml>","Deploy or update resource from YAML"],
+  ["kubectl delete -f <file.yaml>","Delete resources defined in YAML"],
+  ["kubectl delete pod <name>","Delete a specific pod"],
+  ["kubectl scale deployment <name> --replicas=5","Scale a deployment to 5 replicas"],
+  ["kubectl rollout undo deployment/<name>","Rollback a deployment"],
+  ["kubectl rollout status deployment/<name>","Check rollout progress"],
+  ["kubectl get services --all-namespaces","List all services"],
+  ["kubectl port-forward pod/<name> 8080:80","Forward local port 8080 to pod port 80"],
+  ["kubectl get componentstatuses","Check control plane health"],
+  ["kubectl top nodes","Show resource usage per node"],
+  ["kubectl top pods","Show resource usage per pod"],
+  ["kubectl get events --sort-by=.metadata.creationTimestamp","Recent cluster events"],
+  ["kubeadm token create --print-join-command","Generate new worker join command"],
+  ["kubectl proxy","Start proxy to access Dashboard"],
+  ["kubectl create namespace <name>","Create a new namespace"],
+  ["kubectl config get-contexts","List available cluster contexts"],
+  ["kubectl config use-context <name>","Switch to a different cluster context"],
+];
+const tb=document.getElementById('qr-body');
+qr.forEach(([c,d])=>{
+  const tr=document.createElement('tr');
+  const sc=c.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  tr.innerHTML=`<td><div class="qr-cmd"><span>${sc}</span><button class="mini-copy" onclick="miniCopy(this,${JSON.stringify(c)})">Copy</button></div></td><td class="qr-desc">${d}</td>`;
+  tb.appendChild(tr);
+});
+
+const COPY_ICON='⎘ Copy';
+const DONE_ICON='✓ Copied!';
+
+function copyCode(btn){
+  const pre=btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.classList.add('copied');btn.textContent=DONE_ICON;
+    setTimeout(()=>{btn.classList.remove('copied');btn.textContent=COPY_ICON;},2000);
+  });
+}
+function miniCopy(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1500);
+  });
+}
+const secs=document.querySelectorAll('.section');
+const navs=document.querySelectorAll('.nav-item');
+window.addEventListener('scroll',()=>{
+  let cur='intro';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-60)cur=s.id;});
+  navs.forEach(n=>n.classList.toggle('active',n.getAttribute('href')==='#'+cur));
+},{passive:true});
+</script>
+</body>
+</html>
